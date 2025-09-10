@@ -228,6 +228,12 @@ watch(sort, function (val) {
   mapFilesToDir()
 })
 
+function formatDate(timestamp) {
+  if (!timestamp) return '-'
+  const date = new Date(timestamp)
+  return date.toLocaleString() // shows date + time in local format
+}
+
 function getSortVariables(val) {
   let sortKey
   let sortType
@@ -321,13 +327,6 @@ function handleFolderSelect(folder) {
 }
 
 let mouseOnSelectionCheckbox = ref(false)
-
-function formatDate(timestamp) {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleString() // shows date + time in local format
-}
-
 
 function updateSelectedFiles(file, folder) {
   if (file.selected) {
