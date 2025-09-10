@@ -50,6 +50,7 @@
       </div>
       <div class="text-red-500 text-xs" v-show="loadDataErrorText">
         {{ loadDataErrorText }}
+
         <pre class="mt-2"><code class="text-xs">{{ loadDataErrorStack }}</code></pre>
       </div>
       <div class="text-xs mb-4" v-show="fileList.length > 0">
@@ -97,7 +98,12 @@
         <div
           class="rounded-lg mb-2"
           :class="seeFolderStructure ? 'bg-neutral-50 dark:bg-[#333] p-2 shadow' : ''"
-          v-for="folder in Object.keys(dirMap).map((el) => ({ name: el, timestamp: Date.now() }))"
+          v-for="folder in Object.keys(dirMap).map((el) => {
+            return {
+              name: el,
+              timestamp: Date.now()
+            }
+          })"
           :key="folder.name + '_' + structureId"
         >
           <details open class="mb-0 pb-1">
@@ -111,16 +117,16 @@
               @mouseenter="mouseOnSelectionCheckbox = true"
               @mouseleave="mouseOnSelectionCheckbox = false"
             >
-              <label :for="folder.name">
-                <input
+              <label :for="folder.name"
+                ><input
                   name="select_all_for_folder"
                   class="mr-2"
                   type="checkbox"
                   :id="folder.name"
                   @change="handleFolderSelect(folder.name)"
                 />
-                Select All
-              </label>
+                Select All</label
+              >
             </div>
 
             <!-- ✅ File item loop -->
@@ -139,9 +145,10 @@
                 />
               </div>
 
-              <!-- ✅ Filename + filesize + type + date -->
+              <!-- ✅ Filename + filesize -->
               <div
                 class="name whitespace-nowrap text-left text-ellipsis overflow-hidden break-all flex items-center justify-between"
+                style="width: calc(100% - 7rem)"
                 :style="{
                   width: selectMode ? 'calc(100% - 2rem)' : 'calc(100% - 5rem)'
                 }"
@@ -159,9 +166,9 @@
                   </label>
                 </div>
 
-                <!-- 👇 File size, type & upload date -->
+                <!-- 👇 New: File size -->
                 <div class="ml-2 text-gray-500 text-xs whitespace-nowrap">
-                  {{ parseByteSize(item.size) }} · {{ getFileType(item.fileName) }} · {{ formatDate(item.uploaded) }}
+                  {{ parseByteSize(item.size) }}
                 </div>
               </div>
 
@@ -180,16 +187,18 @@
           </details>
         </div>
 
-        <div class="inline-flex space-x-2">
-          <button
-            class="inline outline px-2 py-1 text-xs w-auto mb-0"
-            v-show="globalCursor"
-            @click="loadData('more')"
-            :aria-busy="loading"
-            :disabled="loading"
-          >
-            Load next page
-          </button>
+        <div>
+          <div class="inline-flex space-x-2">
+            <button
+              class="inline outline px-2 py-1 text-xs w-auto mb-0"
+              v-show="globalCursor"
+              @click="loadData('more')"
+              :aria-busy="loading"
+              :disabled="loading"
+            >
+              Load next page
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -204,30 +213,6 @@ import { storeToRefs } from 'pinia'
 import { nanoid } from 'nanoid'
 
 let sort = ref('0')
-let selectMode = ref(false)
-let allFileSize = ref(0)
-let fileList = ref([])
-let selectedFiles = ref([])
-let dirMap = ref({})
-let seeFolderStructure = ref(true)
-let reconstructing = ref(false)
-let loading = ref(false)
-let deletingKey = ref('')
-let structureId = nanoid()
-let mouseOnSelectionCheckbox = ref(false)
-let copyButtonText = ref('Copy URLs')
-let copyButtonDisabled = ref(false)
-let globalCursor = ref('')
-let loadDataErrorText = ref('')
-let loadDataErrorStack = ref('')
-
-let statusStore = useStatusStore()
-let { uploading, endPointUpdated } = storeToRefs(statusStore)
-
-let endPoint = localStorage.getItem('endPoint')
-let apiKey = localStorage.getItem('apiKey')
-let customDomain = localStorage.getItem('customDomain')
-  
 
 onMounted(() => {
   if (localStorage.getItem('seeFolderStructure') === '1') {
@@ -318,23 +303,7 @@ let parseByteSize = function (size) {
 
 let fileList = ref([])
 let loading = ref(false)
-function getFileType(fileName) {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  if(!ext) return 'unknown'
-  if(['jpg','jpeg','png','gif','webp'].includes(ext)) return 'image'
-  if(['mp4','mkv','avi','mov'].includes(ext)) return 'video'
-  if(['mp3','wav','flac'].includes(ext)) return 'audio'
-  if(['zip','rar','7z','tar','gz'].includes(ext)) return 'archive'
-  if(['apk','ipa'].includes(ext)) return 'apk'
-  if(['pdf','doc','docx','txt'].includes(ext)) return 'document'
-  return ext
-}
 
-function formatDate(dateStr) {
-  if(!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})
-}
 function handleFolderSelect(folder) {
   let files = dirMap.value[folder]
   let isInputChecked = document.getElementById(folder).checked
