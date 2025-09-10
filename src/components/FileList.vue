@@ -128,6 +128,8 @@
                 Select All</label
               >
             </div>
+
+            <!-- ✅ File item loop -->
             <div
               class="item mb-2 rounded text-sm py-1 flex items-center justify-between"
               :class="seeFolderStructure ? 'pl-4' : ''"
@@ -142,20 +144,34 @@
                   :id="item.key"
                 />
               </div>
+
+              <!-- ✅ Filename + filesize -->
               <div
-                class="name whitespace-nowrap text-left text-ellipsis overflow-hidden break-all"
+                class="name whitespace-nowrap text-left text-ellipsis overflow-hidden break-all flex items-center justify-between"
                 style="width: calc(100% - 7rem)"
                 :style="{
                   width: selectMode ? 'calc(100% - 2rem)' : 'calc(100% - 5rem)'
                 }"
               >
                 <div class="w-full overflow-hidden text-ellipsis whitespace-nowrap">
-                  <a :href="(customDomain ? customDomain : endPoint) + item.key" target="_blank" v-show="!selectMode">{{
-                    item.fileName
-                  }}</a>
-                  <label v-show="selectMode" :for="item.key" class="mb-0">{{ item.fileName }}</label>
+                  <a
+                    :href="(customDomain ? customDomain : endPoint) + item.key"
+                    target="_blank"
+                    v-show="!selectMode"
+                  >
+                    {{ item.fileName }}
+                  </a>
+                  <label v-show="selectMode" :for="item.key" class="mb-0">
+                    {{ item.fileName }}
+                  </label>
+                </div>
+
+                <!-- 👇 New: File size -->
+                <div class="ml-2 text-gray-500 text-xs whitespace-nowrap">
+                  {{ parseByteSize(item.size) }}
                 </div>
               </div>
+
               <div class="actions w-[5rem] shrink-0 text-right" v-show="!selectMode">
                 <button
                   style="border: none; padding: 0.2rem 0.3rem"
@@ -170,6 +186,7 @@
             </div>
           </details>
         </div>
+
         <div>
           <div class="inline-flex space-x-2">
             <button
@@ -201,7 +218,6 @@ onMounted(() => {
   if (localStorage.getItem('seeFolderStructure') === '1') {
     seeFolderStructure.value = true
   }
-
   if (localStorage.getItem('seeFolderStructure') === '0') {
     seeFolderStructure.value = false
   }
@@ -209,14 +225,12 @@ onMounted(() => {
 
 watch(sort, function (val) {
   localStorage.setItem('sort', val)
-
   mapFilesToDir()
 })
 
 function getSortVariables(val) {
   let sortKey
   let sortType
-
   if (val === '1') {
     sortKey = 'uploaded_timestamp'
     sortType = 'desc'
@@ -230,7 +244,6 @@ function getSortVariables(val) {
     sortKey = 'size'
     sortType = 'asc'
   }
-
   return { sortKey, sortType }
 }
 
@@ -239,7 +252,6 @@ let sortFileList = function (sortKey, sortType) {
   temp.map((el) => {
     return (el.uploaded_timestamp = new Date(el.uploaded).getTime())
   })
-
   temp = temp.sort((a, b) => {
     if (sortType === 'desc') {
       return b[sortKey] - a[sortKey]
@@ -247,7 +259,6 @@ let sortFileList = function (sortKey, sortType) {
       return a[sortKey] - b[sortKey]
     }
   })
-
   return temp
 }
 
@@ -296,7 +307,6 @@ let loading = ref(false)
 function handleFolderSelect(folder) {
   let files = dirMap.value[folder]
   let isInputChecked = document.getElementById(folder).checked
-
   if (isInputChecked) {
     files.forEach((file) => {
       file.selected = true
@@ -318,7 +328,6 @@ function updateSelectedFiles(file, folder) {
   } else {
     selectedFiles.value = selectedFiles.value.filter((item) => item.key !== file.key)
   }
-
   if (folder !== undefined && !mouseOnSelectionCheckbox.value) {
     let files = dirMap.value[folder]
     let isAllSelected = files.every((item) => item.selected)
@@ -328,12 +337,9 @@ function updateSelectedFiles(file, folder) {
 
 function restoreSortSelection() {
   let sortFromLocal = localStorage.getItem('sort')
-
-  // check local value is valid
   if (!['0', '1', '2', '3', '4'].includes(sortFromLocal)) {
     return false
   }
-
   if (sortFromLocal) {
     sort.value = sortFromLocal
   }
@@ -343,23 +349,19 @@ let selectedFiles = ref([])
 
 function deleteSelectedFiles() {
   let c = confirm('Are you sure to delete these files?')
-
   if (!c) {
     return false
   }
-
   selectedFiles.value.forEach((file) => {
     deleteThisFile(file.key, true, {
       callback: () => {
         selectedFiles.value = selectedFiles.value.filter((item) => item.key !== file.key)
-
         if (selectedFiles.value.length === 0) {
           setTimeout(() => {
             console.log('All selected files have been deleted.')
             clearSelection()
           }, 50)
         }
-
         if (fileList.value.length === 0) {
           selectMode.value = false
         }
@@ -372,13 +374,10 @@ const copyButtonText = ref('Copy URLs')
 const copyButtonDisabled = ref(false)
 
 function copySelectedFileUrls() {
-  // Access selected files using .value
   const fileUrls = selectedFiles.value.map((file) => {
     const baseUrl = customDomain ? customDomain : endPoint
     return baseUrl + file.key
   })
-
-  // Copy to clipboard
   const urlString = fileUrls.join('\n')
   navigator.clipboard
     .writeText(urlString)
@@ -398,7 +397,6 @@ function copySelectedFileUrls() {
 function toggleSelectMode() {
   selectMode.value = !selectMode.value
   selectedFiles.value = []
-
   if (!selectMode.value) {
     clearSelection()
   }
@@ -406,11 +404,9 @@ function toggleSelectMode() {
 
 function clearSelection() {
   selectedFiles.value = []
-
   document.querySelectorAll('input[type="checkbox"][name="select_all_for_folder"]').forEach((el) => {
     el.checked = false
   })
-
   let folders = Object.keys(dirMap.value)
   folders.forEach((folder) => {
     document.getElementById(folder).checked = false
@@ -428,27 +424,17 @@ let reconstructing = ref(false)
 async function parseDirs(file) {
   if (seeFolderStructure.value) {
     let dirs = file.key.split('/')
-
     let fileName = dirs[dirs.length - 1]
-
     dirs = dirs.slice(0, dirs.length - 1)
-
     let dirKey = dirs.join('/') + '/'
-
-    let item = {
-      fileName: fileName,
-      key: file.key
-    }
+    let item = { fileName: fileName, key: file.key, size: file.size }
     if (dirMap.value[dirKey]) {
       dirMap.value[dirKey].push(item)
     } else {
       dirMap.value[dirKey] = [item]
     }
   } else {
-    let item = {
-      fileName: file.key,
-      key: file.key
-    }
+    let item = { fileName: file.key, key: file.key, size: file.size }
     if (dirMap.value['/']) {
       dirMap.value['/'].push(item)
     } else {
@@ -460,24 +446,17 @@ async function parseDirs(file) {
 async function mapFilesToDir() {
   dirMap.value = {}
   reconstructing.value = true
-
   let start = Date.now()
-
   let { sortKey, sortType } = getSortVariables(sort.value)
   let temp = sortFileList(sortKey, sortType)
-
   fileList.value = temp
-
   await Promise.all(
     fileList.value.map(async (item) => {
       await parseDirs(item)
     })
   )
-
   let end = Date.now()
-
   reconstructing.value = false
-
   console.log('reconstructed dirMap, took ', end - start, 'ms')
 }
 
@@ -491,34 +470,26 @@ watch(seeFolderStructure, async () => {
 let deletingKey = ref('')
 let deleteThisFile = function (key, isBatchDelete = false, options = {}) {
   let c = true
-
   if (!isBatchDelete) {
     c = confirm('Are you sure to delete this file?')
   }
-
   if (!c) {
     return false
   }
-
   deletingKey.value = key
-
   let fileName = '/' + key
   if (endPoint[endPoint.length - 1] === '/') {
     fileName = key
   }
-
   axios({
     method: 'delete',
-    headers: {
-      'x-api-key': localStorage.getItem('apiKey')
-    },
+    headers: { 'x-api-key': localStorage.getItem('apiKey') },
     url: endPoint + fileName
   })
     .then(async () => {
       deletingKey.value = ''
       fileList.value = fileList.value.filter((item) => item.key !== key)
       await mapFilesToDir()
-
       if (options.callback) {
         options.callback()
       }
@@ -534,13 +505,11 @@ watch(fileList, (newVal) => {
   newVal.forEach((item) => {
     allFileSize.value += item.size
   })
-
   statusStore.uploadedFiles = newVal
 })
 
 let loadDataErrorText = ref('')
 let loadDataErrorStack = ref('')
-
 let globalCursor = ref('')
 
 async function loadData(action) {
@@ -548,47 +517,36 @@ async function loadData(action) {
     loading.value = true
     loadDataErrorText.value = ''
     loadDataErrorStack.value = ''
-
     if (!endPoint || !apiKey) {
       loading.value = false
       return false
     }
-
     const res = await axios({
       method: 'patch',
-      headers: {
-        'x-api-key': apiKey
-      },
+      headers: { 'x-api-key': apiKey },
       url: endPoint + (action === 'more' && globalCursor.value ? '?cursor=' + globalCursor.value : '')
     })
-
     if (globalCursor.value && action === 'more') {
       fileList.value.push(...res.data.objects)
     } else {
       fileList.value = res.data.objects
     }
-
     if (res.data.truncated && res.data.cursor) {
       globalCursor.value = res.data.cursor
     } else {
       globalCursor.value = ''
     }
-
     await restoreSortSelection()
     await mapFilesToDir()
-
     return true
   } catch (e) {
     let errorJson = e.toJSON()
     console.log(errorJson)
     loadDataErrorText.value = `[${errorJson.message}], please check your endpoint and API key.`
-    loadDataErrorStack.value = errorJson.stack
+    loadDataErrorStack.value = JSON.stringify(errorJson, null, 2)
     return false
   } finally {
     loading.value = false
-    clearSelection()
   }
 }
-
-loadData()
 </script>
