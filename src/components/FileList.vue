@@ -166,10 +166,10 @@
                   </label>
                 </div>
 
-                <!-- 👇 File size + upload date -->
-              <div class="ml-2 text-gray-500 text-xs whitespace-nowrap flex flex-col items-end">
-              <div>{{ parseByteSize(item.size) }}</div>
-              <div class="text-[0.65rem] text-gray-400">{{ formatDate(item.uploaded) }}</div>
+                <!-- 👇 New: File size -->
+                <div class="ml-2 text-gray-500 text-xs whitespace-nowrap">
+                  {{ parseByteSize(item.size) }}
+                </div>
               </div>
 
               <div class="actions w-[5rem] shrink-0 text-right" v-show="!selectMode">
@@ -227,12 +227,6 @@ watch(sort, function (val) {
   localStorage.setItem('sort', val)
   mapFilesToDir()
 })
-
-function formatDate(timestamp) {
-  if (!timestamp) return '-'
-  const date = new Date(timestamp)
-  return date.toLocaleString() // shows date + time in local format
-}
 
 function getSortVariables(val) {
   let sortKey
