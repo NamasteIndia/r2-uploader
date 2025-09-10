@@ -167,10 +167,10 @@
                 </div>
 
                 <!-- 👇 File size + upload date -->
-                <div class="ml-2 text-gray-500 text-xs whitespace-nowrap flex flex-col items-end">
-                 <div>{{ parseByteSize(item.size) }}</div>
-                 <div class="text-[0.65rem] text-gray-400">{{ formatDate(item.uploaded) }}</div>
-                </div>
+              <div class="ml-2 text-gray-500 text-xs whitespace-nowrap flex flex-col items-end">
+              <div>{{ parseByteSize(item.size) }}</div>
+              <div class="text-[0.65rem] text-gray-400">{{ formatDate(item.uploaded) }}</div>
+              </div>
 
               <div class="actions w-[5rem] shrink-0 text-right" v-show="!selectMode">
                 <button
